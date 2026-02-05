@@ -1,0 +1,31 @@
+name: "00 - Workflow 1"
+
+on:
+  Workflow_dispatch:
+
+  push:
+    branches: ["main"]
+
+jobs:
+  explain:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout repository"
+      run: 
+        echo "Workflow = Shay is the king"
+
+
+    steps:
+      - name: github actors
+        run: echo "The actor is ${{ github.actor }}"
+
+    steps:
+      - name: docker build+docker push
+        run: echo "Building and Pushing Docker Image"
+        script: |
+          docker build -t shayca6/flask-helloname:latest .
+          docker push shayca6/flask-helloname:latest
+
+    steps:
+      - name: final step 
+        run: echo "This is the final step of the workflow"
