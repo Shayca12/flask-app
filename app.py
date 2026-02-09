@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template_string
+from flask import Flask, request, render_template_string, jsonify
 
 app = Flask(__name__)
 
@@ -29,6 +29,10 @@ def index():
     if request.method == "POST":
         name = request.form.get("name", "").strip()
     return render_template_string(PAGE, name=name)
+
+@app.route("/AI", methods=["GET"])
+def ai():
+    return jsonify({"message": "Activate AI for next buy"})
 
 if __name__ == "__main__":
     # 0.0.0.0 כדי שיעבוד בתוך Docker
