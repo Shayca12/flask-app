@@ -54,3 +54,78 @@ jobs:
 
       - name: "Final Step"
         run: echo "Image pushed to GHCR successfully! ✅"
+
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      flask-app:
+        image: python:3.11-slim
+        options: >-
+          --health-cmd="curl -f http://localhost:5000/ || exit 1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: "Install dependencies"
+        run: pip install -r requirements.txt pytest
+
+      - name: "Run pytest"
+        run: pytest -v
+
+      - name: "Build Docker image for testing"
+        run: docker build -t flask-app-test:latest .
+
+      - name: "Start Flask app in container"
+        run: |
+          docker run -d \
+            --name flask-test-container \
+            -p 5000:5000 \
+            flask-app-test:latest
+          sleep 3
+
+      - name: "Test Health Check Endpoint"
+        run: |
+          echo "Testing GET /"
+          curl -s -w "\nStatus: %{http_code}\n" http://localhost:5000/
+
+      - name: "Test AI Endpoint"
+        run: |
+          echo "Testing GET /AI"
+          curl -s -w "\nStatus: %{http_code}\n" http://localhost:5000/AI
+
+      - name: "Test POST with Form Data"
+        run: |
+          echo "Testing POST / with form data"
+          curl -s -w "\nStatus: %{http_code}\n" \
+            -X POST \
+            -d "name=TestUser" \
+            http://localhost:5000/
+
+      - name: "Verify JSON response from AI endpoint"
+        run: |
+          RESPONSE=$(curl -s http://localhost:5000/AI)
+          echo "Response: $RESPONSE"
+          if echo "$RESPONSE" | grep -q '"message"'; then
+            echo "✅ JSON response verified!"
+          else
+            echo "❌ JSON response not found!"
+            exit 1
+          fi
+
+      - name: "Stop container"
+        if: always()
+        run: docker stop flask-test-container || true
+
+      - name: "Test Summary"
+        run: echo "All tests completed successfully! 🚀"
