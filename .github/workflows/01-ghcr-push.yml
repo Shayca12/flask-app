@@ -58,15 +58,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    services:
-      flask-app:
-        image: python:3.11-slim
-        options: >-
-          --health-cmd="curl -f http://localhost:5000/ || exit 1"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     steps:
       - name: "Checkout repository"
         uses: actions/checkout@v4
